@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MCQ Converter</title>
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: #f3f4f6;
+        margin: 0;
+        padding: 10px;
+        color: #333;
+      }
+
+      h1 {
+        font-size: 2rem;
+        text-align: center;
+        color: #1d4ed8;
+        margin-bottom: 20px;
+      }
+
+      textarea {
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        /* padding: 15px; */
+        font-size: 1rem;
+
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      button {
+        background-color: #06d876;
+        color: rgb(0, 0, 0);
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      button:hover {
+        background-color: #25eb99;
+      }
+
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: white;
+        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+      }
+
+      .card:hover {
+        transform: scale(1.02);
+      }
+
+      .options button {
+        display: block;
+        margin: 8px 0;
+        padding: 10px;
+        width: 100%;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f9fafb;
+        font-size: 1rem;
+        transition: background-color 0.3s;
+        cursor: pointer;
+      }
+
+      .options button:hover {
+        background-color: #e5e7eb;
+      }
+
+      .options button.correct {
+        background-color: #d1fae5;
+        color: #065f46;
+        border-color: #10b981;
+      }
+
+      .options button.incorrect {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border-color: #f87171;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #jsonOutput {
+        white-space: pre-wrap;
+        background: #f9fafb;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-top: 20px;
+        font-family: monospace;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      #downloadBtn {
+        margin-top: 10px;
+        background-color: #10b981;
+        border-color: #10b981;
+      }
+
+      #downloadBtn:hover {
+        background-color: #059669;
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        button {
+          font-size: 0.9rem;
+        }
+
+        .card {
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>MCQ Converter</h1>
+    <textarea
+      placeholder="
+Question text  
+(A) Option 1  
+(B) Option 2  
+(C) Option 3  
+(D) Option 4  
+Answer: Correct Option  
+Explanation: Detailed explanation about the correct answer
+"
+      id="rawData"
+      rows="10"
+    ></textarea>
+    <br />
+    <button onclick="convertAndRender()">Convert and Render</button>
+
+    <div id="mcqContainer"></div>
+
+    <h2>JSON Output</h2>
+    <div id="jsonOutput"></div>
+    <button id="downloadBtn" onclick="downloadJSON()">Download JSON</button>
+
+    <script>
+      function convertAndRender() {
+        const rawData = document.getElementById("rawData").value;
+        const questions = rawData.trim().split("\n\n"); // Split by double line breaks for multiple questions
+        const jsonOutput = [];
+
+        questions.forEach((block) => {
+          const lines = block.split("\n"); // Split each question block into lines
+          const questionText = lines[0].trim();
+          const options = {
+            A: lines[1].replace("(A)", "").trim(),
+            B: lines[2].replace("(B)", "").trim(),
+            C: lines[3].replace("(C)", "").trim(),
+            D: lines[4].replace("(D)", "").trim(),
+          };
+          const answer = lines[5].replace("Answer:", "").trim();
+          const explanation = lines[6].replace("Explanation:", "").trim();
+
+          jsonOutput.push({
+            question: questionText,
+            options: options,
+            answer: answer,
+            explanation: explanation,
+          });
+        });
+
+        renderMCQs(jsonOutput);
+        displayJSON(jsonOutput);
+      }
+
+      function renderMCQs(questions) {
+        const container = document.getElementById("mcqContainer");
+        container.innerHTML = ""; // Clear previous content
+
+        questions.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const question = document.createElement("p");
+          question.textContent = `${index + 1}. ${item.question}`;
+          card.appendChild(question);
+
+          const optionsDiv = document.createElement("div");
+          optionsDiv.className = "options";
+
+          Object.entries(item.options).forEach(([key, value]) => {
+            const button = document.createElement("button");
+            button.textContent = `${key}: ${value}`;
+
+            button.onclick = () => {
+              if (key === item.answer) {
+                button.className = "correct";
+              } else {
+                button.className = "incorrect";
+              }
+
+              Array.from(optionsDiv.children).forEach((btn) => {
+                btn.disabled = true;
+                if (btn.textContent.startsWith(item.answer)) {
+                  btn.className = "correct";
+                }
+              });
+
+              const explanation = document.createElement("p");
+              explanation.textContent = `Explanation: ${item.explanation}`;
+              card.appendChild(explanation);
+            };
+
+            optionsDiv.appendChild(button);
+          });
+
+          card.appendChild(optionsDiv);
+          container.appendChild(card);
+        });
+      }
+
+      function displayJSON(jsonOutput) {
+        const jsonDiv = document.getElementById("jsonOutput");
+        jsonDiv.textContent = JSON.stringify(jsonOutput, null, 2);
+      }
+
+      function downloadJSON() {
+        const jsonDiv = document.getElementById("jsonOutput").textContent;
+        const blob = new Blob([jsonDiv], { type: "application/json" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "mcq.json";
+        link.click();
+      }
+    </script>
+  </body>
+</html>
