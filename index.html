@@ -11,6 +11,8 @@
         margin: 0;
         padding: 10px;
         color: #333;
+        display: flex;
+        flex-direction: column;
       }
 
       h1 {
@@ -19,7 +21,16 @@
         color: #1d4ed8;
         margin-bottom: 20px;
       }
-
+      #uJson {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+        align-items: center;
+      }
+      ul {
+        list-style: none;
+        display: flex;
+      }
       textarea {
         width: 100%;
         border: 1px solid #ddd;
@@ -40,6 +51,12 @@
         font-size: 1rem;
         cursor: pointer;
         transition: background-color 0.3s;
+      }
+      aside {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        flex-wrap: wrap;
       }
 
       button:hover {
@@ -92,7 +109,12 @@
       .hidden {
         display: none;
       }
-
+      #jsonFile {
+        margin-top: 10px;
+      }
+      #mcqContainer {
+        margin-top: 20px;
+      }
       #jsonOutput {
         white-space: pre-wrap;
         background: #f9fafb;
@@ -115,6 +137,36 @@
         background-color: #059669;
       }
 
+      #downloadTextBtn {
+        margin-top: 10px;
+        background-color: #10b981;
+        border-color: #10b981;
+      }
+
+      #downloadTextBtn:hover {
+        background-color: #059669;
+      }
+
+      #downloadTextWithoutAnswerBtn {
+        margin-top: 10px;
+        background-color: #10b981;
+        border-color: #10b981;
+      }
+
+      #downloadTextWithoutAnswerBtn:hover {
+        background-color: #059669;
+      }
+
+      #uploadJsonBtn {
+        margin-top: 10px;
+        background-color: #10b981;
+        border-color: #10b981;
+      }
+
+      #uploadJsonBtn:hover {
+        background-color: #059669;
+      }
+
       @media (max-width: 768px) {
         h1 {
           font-size: 1.5rem;
@@ -131,9 +183,23 @@
     </style>
   </head>
   <body>
-    <h1>MCQ Converter</h1>
-    <textarea
-      placeholder="
+    <header id="uJson">
+      <h1 onclick="toggleVisibility()">MCQ Converter</h1>
+      <ul>
+        <li>
+          <input class="hidden" type="file" id="jsonFile" accept=".json" />
+        </li>
+        <li>
+          <button class="hidden" id="uploadJsonBtn" onclick="uploadJson()">
+            Upload JSON
+          </button>
+        </li>
+      </ul>
+    </header>
+    <main>
+      <section>
+        <textarea
+          placeholder="
 Question text  
 (A) Option 1  
 (B) Option 2  
@@ -142,19 +208,54 @@ Question text
 Answer: Correct Option  
 Explanation: Detailed explanation about the correct answer
 "
-      id="rawData"
-      rows="10"
-    ></textarea>
-    <br />
-    <button onclick="convertAndRender()">Convert and Render</button>
+          id="rawData"
+          rows="10"
+        ></textarea>
 
-    <div id="mcqContainer"></div>
+        <button onclick="convertAndRender()">Convert and Render</button>
 
-    <h2>JSON Output</h2>
-    <div id="jsonOutput"></div>
-    <button id="downloadBtn" onclick="downloadJSON()">Download JSON</button>
+        <div id="mcqContainer"></div>
+
+        <h2>JSON Output</h2>
+        <div id="jsonOutput"></div>
+      </section>
+    </main>
+    <aside>
+      <button id="downloadBtn" onclick="downloadJSON()">Download JSON</button>
+
+      <button id="downloadTextBtn" onclick="downloadText()">
+        Download Text as .doc
+      </button>
+
+      <button
+        id="downloadTextWithoutAnswerBtn"
+        onclick="downloadTextWithoutAnswer()"
+      >
+        Download Text without Answer and Explanation as .doc
+      </button>
+    </aside>
 
     <script>
+      // Function to toggle visibility
+      function toggleVisibility() {
+        const fileInput = document.getElementById("jsonFile");
+        const uploadBtn = document.getElementById("uploadJsonBtn");
+
+        if (fileInput.style.display === "none") {
+          fileInput.style.display = "block";
+          uploadBtn.style.display = "block";
+        } else {
+          fileInput.style.display = "none";
+          uploadBtn.style.display = "none";
+        }
+      }
+
+      // Event listener for keyboard combination (Alt + J)
+      document.addEventListener("keydown", function (event) {
+        if (event.altKey && event.key === "j") {
+          toggleVisibility();
+        }
+      });
       function convertAndRender() {
         const rawData = document.getElementById("rawData").value;
         const questions = rawData.trim().split("\n\n"); // Split by double line breaks for multiple questions
@@ -242,6 +343,68 @@ Explanation: Detailed explanation about the correct answer
         link.href = URL.createObjectURL(blob);
         link.download = "mcq.json";
         link.click();
+      }
+
+      function downloadText() {
+        const text = document.getElementById("rawData").value;
+        const blob = new Blob([text], { type: "application/msword" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "mcq.doc";
+        link.click();
+      }
+
+      function downloadTextWithoutAnswer() {
+        const rawData = document.getElementById("rawData").value;
+        const questions = rawData.trim().split("\n\n"); // Split by double line breaks for multiple questions
+        let textWithoutAnswer = "";
+
+        questions.forEach((block) => {
+          const lines = block.split("\n"); // Split each question block into lines
+          const questionText = lines[0].trim();
+          const options = {
+            A: lines[1].replace("(A)", "").trim(),
+            B: lines[2].replace("(B)", "").trim(),
+            C: lines[3].replace("(C)", "").trim(),
+            D: lines[4].replace("(D)", "").trim(),
+          };
+
+          textWithoutAnswer += `${questionText}\n`;
+          textWithoutAnswer += `${lines[1]}\n`;
+          textWithoutAnswer += `${lines[2]}\n`;
+          textWithoutAnswer += `${lines[3]}\n`;
+          textWithoutAnswer += `${lines[4]}\n\n`;
+        });
+
+        const blob = new Blob([textWithoutAnswer], {
+          type: "application/msword",
+        });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "mcq_without_answer.doc";
+        link.click();
+      }
+
+      function uploadJson() {
+        const fileInput = document.getElementById("jsonFile");
+        const file = fileInput.files[0];
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            const jsonData = JSON.parse(event.target.result);
+            const formattedData = jsonData
+              .map((item) => {
+                return `${item.question}\n(A) ${item.options.A}\n(B) ${item.options.B}\n(C) ${item.options.C}\n(D) ${item.options.D}\nAnswer: ${item.answer}\nExplanation: ${item.explanation}\n\n`;
+              })
+              .join("");
+            document.getElementById("rawData").value = formattedData;
+            convertAndRender();
+          };
+          reader.readAsText(file);
+        } else {
+          alert("Please select a JSON file to upload.");
+        }
       }
     </script>
   </body>
