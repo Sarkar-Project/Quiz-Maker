@@ -291,39 +291,41 @@ Explanation: Detailed explanation about the correct answer
       });
 
       // Shake detection for mobile devices
-      let lastX, lastY, lastZ;
-      let shakeThreshold = 60; // Adjust this value as needed
+      let lastX = 0,
+        lastY = 0,
+        lastZ = 0; // Initialize values to avoid NaN issues
+      let shakeThreshold = 100; // Adjust this value for sensitivity
       let lastShakeTime = 0;
 
       window.addEventListener("devicemotion", function (event) {
         const currentTime = new Date().getTime();
+
+        // Prevent multiple triggers in quick succession
         if (currentTime - lastShakeTime > 1000) {
-          // Prevent multiple triggers in quick succession
-          const x = event.accelerationIncludingGravity.x;
-          const y = event.accelerationIncludingGravity.y;
-          const z = event.accelerationIncludingGravity.z;
+          const x = event.accelerationIncludingGravity.x || 0;
+          const y = event.accelerationIncludingGravity.y || 0;
+          const z = event.accelerationIncludingGravity.z || 0;
 
           const deltaX = Math.abs(lastX - x);
           const deltaY = Math.abs(lastY - y);
           const deltaZ = Math.abs(lastZ - z);
 
+          // Check if the shake exceeds the threshold
           if (
             deltaX > shakeThreshold ||
             deltaY > shakeThreshold ||
             deltaZ > shakeThreshold
           ) {
-            lastShakeTime = currentTime;
+            lastShakeTime = currentTime; // Update the last shake time
             toggleVisible(); // Call the toggle function on shake
           }
 
+          // Update last known values
           lastX = x;
           lastY = y;
           lastZ = z;
         }
       });
-
-      // Initialize last values
-      lastX = lastY = lastZ = 0;
 
       function convertAndRender() {
         const rawData = document.getElementById("rawData").value;
