@@ -249,43 +249,82 @@ Explanation: Detailed explanation about the correct answer
           uploadBtn.style.display = "none";
         }
       }
+      // Function to toggle visibility of elements
+      function toggleVisible() {
+        const textInput = document.querySelector("textarea");
+        const btn = document.querySelector("aside");
+        const CR = document.querySelector("#cr"); // Assuming #cr is a valid element
+        const header = document.querySelector("header");
+        const h2 = document.querySelector("h2");
+        const jsonOutput = document.getElementById("jsonOutput");
+        const quiz = document.getElementById("mcqContainer"); // Ensure you have the quiz container
+
+        // Ensure the quiz container is always visible
+        quiz.style.display = "block";
+
+        // Toggle the visibility of the textarea, buttons, and headers
+        const isVisible =
+          textInput.style.display !== "none" && textInput.style.display !== "";
+
+        if (!isVisible) {
+          textInput.style.display = "block"; // Show the textarea
+          btn.style.display = "flex"; // Show the aside buttons
+          header.style.display = "flex"; // Show the header
+          h2.style.display = "block"; // Show the h2 header
+          CR.style.display = "flex"; // Show the CR element
+          jsonOutput.style.display = "block"; // Show the JSON output
+        } else {
+          textInput.style.display = "none"; // Hide the textarea
+          btn.style.display = "none"; // Hide the aside buttons
+          header.style.display = "none"; // Hide the header
+          h2.style.display = "none"; // Hide the h2 header
+          CR.style.display = "none"; // Hide the CR element
+          jsonOutput.style.display = "none"; // Hide the JSON output
+        }
+      }
 
       // Event listener for keyboard combination (Alt + J)
       document.addEventListener("keydown", function (event) {
         if (event.altKey && event.key === "j") {
-          const textInput = document.querySelector("textarea");
-          const btn = document.querySelector("aside");
-          const CR = document.querySelector("#cr"); // Assuming #cr is a valid element
-          const header = document.querySelector("header");
-          const h2 = document.querySelector("h2");
-          const jsonOutput = document.getElementById("jsonOutput");
-          const quiz = document.getElementById("mcqContainer"); // Ensure you have the quiz container
-
-          // Ensure the quiz container is always visible
-          quiz.style.display = "block";
-
-          // Toggle the visibility of the textarea, buttons, and headers
-          const isVisible =
-            textInput.style.display !== "none" &&
-            textInput.style.display !== "";
-
-          if (!isVisible) {
-            textInput.style.display = "block"; // Show the textarea
-            btn.style.display = "flex"; // Show the aside buttons
-            header.style.display = "flex"; // Show the header
-            h2.style.display = "block"; // Show the h2 header
-            CR.style.display = "flex"; // Show the CR element
-            jsonOutput.style.display = "block"; // Show the JSON output
-          } else {
-            textInput.style.display = "none"; // Hide the textarea
-            btn.style.display = "none"; // Hide the aside buttons
-            header.style.display = "none"; // Hide the header
-            h2.style.display = "none"; // Hide the h2 header
-            CR.style.display = "none"; // Hide the CR element
-            jsonOutput.style.display = "none"; // Hide the JSON output
-          }
+          toggleVisible();
         }
       });
+
+      // Shake detection for mobile devices
+      let lastX, lastY, lastZ;
+      let shakeThreshold = 15; // Adjust this value as needed
+      let lastShakeTime = 0;
+
+      window.addEventListener("devicemotion", function (event) {
+        const currentTime = new Date().getTime();
+        if (currentTime - lastShakeTime > 1000) {
+          // Prevent multiple triggers in quick succession
+          const x = event.accelerationIncludingGravity.x;
+          const y = event.accelerationIncludingGravity.y;
+          const z = event.accelerationIncludingGravity.z;
+
+          const deltaX = Math.abs(lastX - x);
+          const deltaY = Math.abs(lastY - y);
+          const deltaZ = Math.abs(lastZ - z);
+
+          if (
+            deltaX > shakeThreshold ||
+            deltaY > shakeThreshold ||
+            deltaZ > shakeThreshold
+          ) {
+            lastShakeTime = currentTime;
+            toggleVisible(); // Call the toggle function on shake
+          }
+
+          lastX = x;
+          lastY = y;
+          lastZ = z;
+        }
+      });
+
+      // Initialize last values
+      lastX = lastY = lastZ = 0;
+
       function convertAndRender() {
         const rawData = document.getElementById("rawData").value;
         const questions = rawData.trim().split("\n\n"); // Split by double line breaks for multiple questions
