@@ -290,43 +290,59 @@ Explanation: Detailed explanation about the correct answer
         }
       });
 
-      // Shake detection for mobile devices
+       // Three back taps detection
       let lastX = 0,
         lastY = 0,
-        lastZ = 0; // Initialize values to avoid NaN issues
-      let shakeThreshold = 100; // Adjust this value for sensitivity
-      let lastShakeTime = 0;
+        lastZ = 0; // Last accelerometer values
+      let tapCount = 0; // Count consecutive taps
+      let lastTapTime = 0; // Track timing between taps
+      const tapThreshold = 15; // Minimum acceleration change needed (adjust for sensitivity)
+      const tapInterval = 1000; // Max time between taps (1 second)
+      const cooldown = 200; // Minimum time between tap detections (0.2 seconds)
 
       window.addEventListener("devicemotion", function (event) {
         const currentTime = new Date().getTime();
 
-        // Prevent multiple triggers in quick succession
-        if (currentTime - lastShakeTime > 1000) {
-          const x = event.accelerationIncludingGravity.x || 0;
-          const y = event.accelerationIncludingGravity.y || 0;
-          const z = event.accelerationIncludingGravity.z || 0;
+        // Prevent multiple detections from single tap
+        if (currentTime - lastTapTime < cooldown) return;
 
-          const deltaX = Math.abs(lastX - x);
-          const deltaY = Math.abs(lastY - y);
-          const deltaZ = Math.abs(lastZ - z);
+        // Get acceleration data (including gravity)
+        const x = event.accelerationIncludingGravity.x || 0;
+        const y = event.accelerationIncludingGravity.y || 0;
+        const z = event.accelerationIncludingGravity.z || 0;
 
-          // Check if the shake exceeds the threshold
-          if (
-            deltaX > shakeThreshold ||
-            deltaY > shakeThreshold ||
-            deltaZ > shakeThreshold
-          ) {
-            lastShakeTime = currentTime; // Update the last shake time
-            toggleVisible(); // Call the toggle function on shake
+        // Calculate changes from last reading
+        const deltaX = Math.abs(lastX - x);
+        const deltaY = Math.abs(lastY - y);
+        const deltaZ = Math.abs(lastZ - z);
+
+        // Update previous values
+        lastX = x;
+        lastY = y;
+        lastZ = z;
+
+        // Check if any axis exceeds threshold
+        if (
+          deltaX > tapThreshold ||
+          deltaY > tapThreshold ||
+          deltaZ > tapThreshold
+        ) {
+          // Reset count if taps are too slow
+          if (currentTime - lastTapTime > tapInterval) {
+            tapCount = 1;
+          } else {
+            tapCount++;
           }
 
-          // Update last known values
-          lastX = x;
-          lastY = y;
-          lastZ = z;
+          lastTapTime = currentTime;
+
+          // Trigger action after 3 taps
+          if (tapCount === 3) {
+            toggleVisible();
+            tapCount = 0; // Reset counter
+          }
         }
       });
-
       function convertAndRender() {
         const rawData = document.getElementById("rawData").value;
         const questions = rawData.trim().split("\n\n"); // Split by double line breaks for multiple questions
